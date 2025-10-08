@@ -67,14 +67,16 @@ static const struct {
     static int num_dropped = 0; \
     static auto last_log_time = std::chrono::steady_clock::now() - interval_chrono_duration; \
     auto now = std::chrono::steady_clock::now(); \
-    if (OCLEA_LOG_CHECK_LEVEL(level) && now - last_log_time >= interval_chrono_duration) { \
-        last_log_time = now; \
-        std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ", dropped=" << num_dropped << ") " \
-                  << args \
-                  << std::endl; \
-        num_dropped = 0; \
-    } else { \
-        num_dropped++; \
+    if (OCLEA_LOG_CHECK_LEVEL(level)) { \
+        if (now - last_log_time >= interval_chrono_duration) { \
+            last_log_time = now; \
+            std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ", dropped=" << num_dropped << ") " \
+                      << args \
+                      << std::endl; \
+            num_dropped = 0; \
+        } else { \
+            num_dropped++; \
+        } \
     } \
 } while(0)
 
