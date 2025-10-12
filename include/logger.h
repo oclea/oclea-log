@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <chrono>
 
 #define OCLEA_LOG_LEVEL_CRITICAL 0
 #define OCLEA_LOG_LEVEL_ERROR    1
@@ -62,6 +63,23 @@ static const struct {
     } \
 } while(0)
 
+#define OCLEA_LOG_STREAM_THROTTLE(level, interval_chrono_duration, args) do { \
+    if (OCLEA_LOG_CHECK_LEVEL(level)) { \
+       static int num_dropped = 0; \
+       static auto last_log_time = std::chrono::steady_clock::now() - interval_chrono_duration; \
+       auto now = std::chrono::steady_clock::now(); \
+       if (now - last_log_time >= interval_chrono_duration) { \
+            std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ", dropped=" << num_dropped << ") " \
+                      << args \
+                      << std::endl; \
+            last_log_time = now; \
+            num_dropped = 0; \
+        } else { \
+            num_dropped++; \
+        } \
+    } \
+} while(0)
+
 #define OCLEA_LOG_STREAM_WITH_TRACE(level, args) do { \
     if (OCLEA_LOG_CHECK_LEVEL(level)) { \
         std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ") " \
@@ -90,5 +108,14 @@ static const struct {
 #define OLOG_INFO_STREAM(args)     OCLEA_LOG_STREAM(OCLEA_LOG_LEVEL_INFO, args)
 #define OLOG_DEBUG_STREAM(args)    OCLEA_LOG_STREAM(OCLEA_LOG_LEVEL_DEBUG, args)
 #define OLOG_TRACE_STREAM(args)    OCLEA_LOG_STREAM_WITH_TRACE(OCLEA_LOG_LEVEL_TRACE, args)
+
+/* Throttled log macros: interval_chrono_duration is a std::chrono duration, e.g., std::chrono::seconds(1), std::chrono::milliseconds(500), or
+   1s, 500ms if using the std::chrono_literals namespace */
+#define OLOG_CRITICAL_STREAM_THROTTLE(interval_chrono_duration, args) OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_CRITICAL, interval_chrono_duration, args)
+#define OLOG_ERROR_STREAM_THROTTLE(interval_chrono_duration, args)    OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_ERROR, interval_chrono_duration, args)
+#define OLOG_WARN_STREAM_THROTTLE(interval_chrono_duration, args)     OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_WARNING, interval_chrono_duration, args)
+#define OLOG_NOTICE_STREAM_THROTTLE(interval_chrono_duration, args)   OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_NOTICE, interval_chrono_duration, args)
+#define OLOG_INFO_STREAM_THROTTLE(interval_chrono_duration, args)     OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_INFO, interval_chrono_duration, args)
+#define OLOG_DEBUG_STREAM_THROTTLE(interval_chrono_duration, args)    OCLEA_LOG_STREAM_THROTTLE(OCLEA_LOG_LEVEL_DEBUG, interval_chrono_duration, args)
 
 #endif  // __OCLEA_LOG_H__
