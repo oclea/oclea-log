@@ -45,6 +45,7 @@ protected:
         fcntl(pipe_fd_[0], F_SETFL, flags & ~O_NONBLOCK);
 
         // Use a short timeout via select to avoid blocking forever
+        std::string result;
         char buf[4096];
         while (true) {
             struct timeval tv = {0, 10000}; // 10ms
