@@ -1,16 +1,19 @@
 #include <gtest/gtest.h>
 
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
-#include <regex>
 #include <atomic>
 #include <chrono>
 #include <cstdio>
-#include <unistd.h>
 #include <fcntl.h>
+#include <iostream>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <unistd.h>
+#include <vector>
 
+#include <sys/select.h>
+#include <sys/time.h>
 // Capture all stdout output (both fprintf and std::cout) via dup2
 class LogCaptureFixture : public ::testing::Test {
 protected:
