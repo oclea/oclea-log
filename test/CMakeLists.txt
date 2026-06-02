@@ -1,5 +1,6 @@
 find_package(GTest REQUIRED)
 find_package(Threads REQUIRED)
+include(GoogleTest)
 
 add_executable(test_oclea_log
     test_logger.cpp
@@ -7,8 +8,8 @@ add_executable(test_oclea_log
 
 target_link_libraries(test_oclea_log PRIVATE
     OcleaLog
-    GTest::GTest
-    GTest::Main
+    GTest::gtest
+    GTest::gtest_main
     Threads::Threads
 )
 
