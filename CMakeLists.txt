@@ -26,3 +26,9 @@ install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
     DESTINATION ${OCLEA_LOG_INCLUDE_INSTALL_DIR}
 )
+
+option(OCLEA_LOG_BUILD_TESTS "Build oclea-log unit tests" OFF)
+if(OCLEA_LOG_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
