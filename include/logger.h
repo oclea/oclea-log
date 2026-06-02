@@ -3,6 +3,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <sstream>
+#include <mutex>
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <chrono>
@@ -57,21 +59,25 @@ static const struct {
 
 #define OCLEA_LOG_STREAM(level, args) do { \
     if (OCLEA_LOG_CHECK_LEVEL(level)) { \
-        std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ") " \
-                  << args \
-                  << std::endl; \
+        std::ostringstream oss_; \
+        oss_ << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ") " \
+             << args << '\n'; \
+        std::cout << oss_.str() << std::flush; \
     } \
 } while(0)
 
 #define OCLEA_LOG_STREAM_THROTTLE(level, interval_chrono_duration, args) do { \
     if (OCLEA_LOG_CHECK_LEVEL(level)) { \
+       static std::mutex mtx_; \
        static int num_dropped = 0; \
        static auto last_log_time = std::chrono::steady_clock::now() - interval_chrono_duration; \
+       std::lock_guard<std::mutex> lock_(mtx_); \
        auto now = std::chrono::steady_clock::now(); \
        if (now - last_log_time >= interval_chrono_duration) { \
-            std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ", dropped=" << num_dropped << ") " \
-                      << args \
-                      << std::endl; \
+            std::ostringstream oss_; \
+            oss_ << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ", dropped=" << num_dropped << ") " \
+                 << args << '\n'; \
+            std::cout << oss_.str() << std::flush; \
             last_log_time = now; \
             num_dropped = 0; \
         } else { \
@@ -82,10 +88,11 @@ static const struct {
 
 #define OCLEA_LOG_STREAM_WITH_TRACE(level, args) do { \
     if (OCLEA_LOG_CHECK_LEVEL(level)) { \
-        std::cout << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ") " \
-                  << strip_file_(__FILE__) << ":" << __FUNCTION__ << ":" << __LINE__ << ": " \
-                  << args \
-                  << std::endl; \
+        std::ostringstream oss_; \
+        oss_ << log_level_strings[level].prio << "[" << log_level_strings[level].name << "](tid=" << syscall(SYS_gettid) << ") " \
+             << strip_file_(__FILE__) << ":" << __FUNCTION__ << ":" << __LINE__ << ": " \
+             << args << '\n'; \
+        std::cout << oss_.str() << std::flush; \
     } \
 } while(0)
 
