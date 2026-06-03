@@ -27,7 +27,7 @@ install(
     DESTINATION ${OCLEA_LOG_INCLUDE_INSTALL_DIR}
 )
 
-option(OCLEA_LOG_BUILD_TESTS "Build oclea-log unit tests" ON)
+option(OCLEA_LOG_BUILD_TESTS "Build oclea-log unit tests" OFF)
 if(OCLEA_LOG_BUILD_TESTS)
     include(CTest)
     include(GoogleTest)
